@@ -1,7 +1,7 @@
 import re
 import sys
 
-code_fname = "2025~day-01.code" 
+code_fname = "day-01.code" 
 output_fname = "reconstructed_key.bin"
 
 # Store operations by variable name: {'var_400': [(address, op, val), ...], ...}
