@@ -1,0 +1,2 @@
+#pragma once
+#define PYPU_PRIVILEGED_HASH 0xf0a0101a75bc9dd3ULL
